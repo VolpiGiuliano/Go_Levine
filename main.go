@@ -4,6 +4,12 @@ import (
 	"fmt"
 )
 
+
+const(
+	ORDER_BOOK_LENGTH int8 = 20
+)
+
+
 // Rappresents the single order.
 //
 // o_type : string {"bid","ask"}
@@ -20,7 +26,7 @@ type Order struct {
 /////////////Queue////////////////
 
 // Queue that the orders need to follow in any given price.
-// The order is first-in first-out (time priority)
+// The order is first-in first-out (time priority) FIFO
 type Queue struct {
 	items []Order
 }
@@ -36,8 +42,14 @@ func (q *Queue) Dequeue() Order {
 	return to_remove
 }
 
-//////////////////////////////////
+////////////////Order Book//////////////////
 
+type Order_Book struct {
+	ask [ORDER_BOOK_LENGTH]*Queue
+	bid [ORDER_BOOK_LENGTH]*Queue
+}
+
+////////////////////////////////
 // Made up orders for testing
 
 var or = Order{"ask", 10, 15}
@@ -47,34 +59,36 @@ var bid1 = Order{"bid", 9, 9}
 var bid2 = Order{"bid", 9, 1}
 var bid3 = Order{"bid", 7, 100}
 var bid4 = Order{"bid", 9, 2}
+var bid5 = Order{"bid", 5, 5}
+var bido1 = Order{"bid", 2, 1}
+var bido2 = Order{"bid", 2, 2}
 
-var ask_l [20]*Queue
-var bid_l [20]*Queue
+
+var ask_l [ORDER_BOOK_LENGTH]*Queue
+var bid_l [ORDER_BOOK_LENGTH]*Queue
 
 var incoming_q []Order
 
 /////////////////////////////////////////
 
-type Order_Book struct {
-	ask [20]*Queue
-	bid [20]*Queue
-}
+
 
 // It puts the single Order in
-func inserter(l_in_quo *[]Order, l_ask [20]*Queue, l_bid [20]*Queue) {
+func inserter(l_in_quo *[]Order, l_ask [ORDER_BOOK_LENGTH]*Queue, l_bid [ORDER_BOOK_LENGTH]*Queue) {
 
-	fmt.Printf("INFUNC Incoming quote: %v     Pointer: %p\n", l_in_quo, l_in_quo)
+	fmt.Println("                  §")
+	fmt.Printf("++++++++++++++++++++++++++++++++++++\nStart insertion\nINFUNC Incoming quote: %v     Pointer: %p\n", l_in_quo, l_in_quo)
 
 	switch {
 	case len(*l_in_quo) == 1 && (*l_in_quo)[0].o_type == "ask":
 
 		l_ask[int((*l_in_quo)[0].price)].Enqueue((*l_in_quo)[0])
-		return
+		//return
 
 	case len(*l_in_quo) == 1 && (*l_in_quo)[0].o_type == "bid":
 
 		l_bid[int((*l_in_quo)[0].price)].Enqueue((*l_in_quo)[0])
-		return
+		//return
 
 	case len(*l_in_quo) > 1:
 
@@ -87,14 +101,19 @@ func inserter(l_in_quo *[]Order, l_ask [20]*Queue, l_bid [20]*Queue) {
 		}
 
 	case len(*l_in_quo) == 0:
+		fmt.Printf("No incoming quotes\n++++++++++++++++++++++++++++++++++++\n")
+		fmt.Println("                  §")
 		return
 
 	}
+
 	*l_in_quo = nil
-	fmt.Printf("INFUNC Incoming quote: %v     Pointer: %p\n", l_in_quo, l_in_quo)
+	fmt.Printf("End insertion\nINFUNC Incoming quote: %v     Pointer: %p\n++++++++++++++++++++++++++++++++++++\n", l_in_quo, l_in_quo)
+	fmt.Println("                  §")
+
 }
 
-func ticker(list [20]*Queue, name string) {
+func ticker(list [ORDER_BOOK_LENGTH]*Queue, name string) {
 
 	fmt.Printf("\nList %v\n", name)
 
@@ -109,23 +128,21 @@ func ticker(list [20]*Queue, name string) {
 	}
 }
 
-func Order_Book_print(OB Order_Book) {
-	fmt.Printf("Order Book: %v  \n %v \n", OB, OB.ask)
+func Order_Book_print(OB Order_Book, lenght_OB int8) {
+	//fmt.Printf("Order Book: %v  \n %v \n", OB, OB.ask)
+	fmt.Println("                  °")
 	fmt.Println("----------- Order Book --------------")
 	fmt.Println("            Bid        Ask ")
-	for i := 0; i < 20; i++ {
+	for  i := 0; i < int(lenght_OB); i++ {
 
 		fmt.Printf("Level: %v | %v   -   %v  |\n", i, OB.bid[i], OB.ask[i])
 	}
 
 	fmt.Println("-------------------------------------")
+	fmt.Println("                  °")
 }
 
-/*
-func print_order_book (bid_list [20]*Queue, ask_list [20]*Queue){
 
-}
-*/
 
 func main() {
 
@@ -138,15 +155,17 @@ func main() {
 		p_que := Queue{}
 		bid_l[price_i] = &p_que
 	}
-	//fmt.Printf("Var: %v     Length: %v       Capacity: %v       Pointer: %p\n", incoming_q, len(incoming_q), cap(incoming_q), &incoming_q)
+	
 
 	incoming_q = append(incoming_q, or, or1, or2, bid1, bid2, bid3, bid4)
 
-	//fmt.Printf("Var: %v     Length: %v       Capacity: %v       Pointer: %p\n", incoming_q, len(incoming_q), cap(incoming_q), &incoming_q)
+	OB := Order_Book{ask_l, bid_l}
 
 	inserter(&incoming_q, ask_l, bid_l)
 
-	fmt.Println("----- INITIAL LIST -----")
+
+/*
+	fmt.Println("----------- INITIAL LIST -----------")
 	fmt.Println("ASK list")
 	for ind, pp := range ask_l {
 
@@ -167,13 +186,35 @@ func main() {
 		}
 	}
 
+	fmt.Println("------------------------------------")
+
 	fmt.Printf("Incoming quote: %v     Pointer: %p\n", incoming_q, &incoming_q)
+*/
+	//ticker(bid_l, "Bids")
+	//ticker(ask_l, "Ask")
 
-	ticker(bid_l, "Bids")
-	ticker(ask_l, "Ask")
+	
 
-	OB := Order_Book{ask_l, bid_l}
+	Order_Book_print(OB,ORDER_BOOK_LENGTH)
 
-	Order_Book_print(OB)
+	// test ob insert
+
+	incoming_q = append(incoming_q, bid5) 
+	inserter(&incoming_q, OB.ask, OB.bid)
+	Order_Book_print(OB,ORDER_BOOK_LENGTH)
+
+	fmt.Printf("Incoming after test of 5: %v \n",incoming_q)
+	// test que order
+
+	incoming_q = append(incoming_q, bido1,bido2) 
+	inserter(&incoming_q, OB.ask, OB.bid)
+	Order_Book_print(OB,ORDER_BOOK_LENGTH)
+	fmt.Printf("Taking out: %v \n",OB.bid[2].Dequeue())
+	Order_Book_print(OB,ORDER_BOOK_LENGTH)
+
+	fmt.Printf("Incoming after test of order: %v \n",incoming_q)
+
+	// test inseter reset
+
 
 }
