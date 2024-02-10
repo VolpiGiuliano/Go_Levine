@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	//"reflect"
 )
 
 
@@ -59,6 +60,7 @@ var bid1 = Order{"bid", 9, 9}
 var bid2 = Order{"bid", 9, 1}
 var bid3 = Order{"bid", 7, 100}
 var bid4 = Order{"bid", 9, 2}
+
 var bid5 = Order{"bid", 5, 5}
 var bido1 = Order{"bid", 2, 1}
 var bido2 = Order{"bid", 2, 2}
@@ -73,7 +75,7 @@ var incoming_q []Order
 
 
 
-// It puts the single Order in
+// It puts the single Order in the Order Book
 func inserter(l_in_quo *[]Order, l_ask [ORDER_BOOK_LENGTH]*Queue, l_bid [ORDER_BOOK_LENGTH]*Queue) {
 
 	fmt.Println("                  §")
@@ -113,6 +115,7 @@ func inserter(l_in_quo *[]Order, l_ask [ORDER_BOOK_LENGTH]*Queue, l_bid [ORDER_B
 
 }
 
+
 func ticker(list [ORDER_BOOK_LENGTH]*Queue, name string) {
 
 	fmt.Printf("\nList %v\n", name)
@@ -128,6 +131,7 @@ func ticker(list [ORDER_BOOK_LENGTH]*Queue, name string) {
 	}
 }
 
+
 func Order_Book_print(OB Order_Book, lenght_OB int8) {
 	//fmt.Printf("Order Book: %v  \n %v \n", OB, OB.ask)
 	fmt.Println("                  °")
@@ -142,6 +146,36 @@ func Order_Book_print(OB Order_Book, lenght_OB int8) {
 	fmt.Println("                  °")
 }
 
+
+// if there is no best quote it will rerurn {0,[]}
+func find_best (ob Order_Book)(level_b int, best_b []Order,level_a int, best_a []Order){
+	
+	fmt.Printf("##################################\n\nSearching for the BEST ASK\n")
+	for index := len(ob.bid)-1;index >= 0; index-- {
+		fmt.Printf("Index: %v | Items: %v  ->len:%v\n",index, ob.bid[index].items,len(ob.bid[index].items))
+
+		if len(ob.bid[index].items)!=0{
+			level_b= index
+			best_b=ob.bid[index].items
+			break
+		}
+
+	}
+
+	fmt.Printf("\n===================================\n\nSearching for the BEST ASK\n")
+	for index, value := range ob.ask{
+		fmt.Printf("Index: %v | Items: %v  ->len:%v\n",index, value.items,len(value.items))
+
+		if len(value.items)!=0{
+			level_a= index
+			best_a=value.items
+			break
+		}
+
+	}
+	fmt.Printf("\n##################################\n\n")
+	return
+}
 
 
 func main() {
@@ -164,39 +198,8 @@ func main() {
 	inserter(&incoming_q, ask_l, bid_l)
 
 
-/*
-	fmt.Println("----------- INITIAL LIST -----------")
-	fmt.Println("ASK list")
-	for ind, pp := range ask_l {
-
-		if len(pp.items) != 0 {
-			fmt.Printf("Value: %v   %v  | Point:%v     %p\n", ind, *pp, *&pp.items[0], &pp.items[0])
-		} else {
-			fmt.Printf("Value: %v   %v  | Point:%v     %p\n", ind, *pp, *&pp.items, &pp.items)
-		}
-	}
-
-	fmt.Println("BID list")
-	for ind, pp := range bid_l {
-
-		if len(pp.items) != 0 {
-			fmt.Printf("Value: %v   %v  | Point:%v     %p\n", ind, *pp, *&pp.items[0], &pp.items[0])
-		} else {
-			fmt.Printf("Value: %v   %v  | Point:%v     %p\n", ind, *pp, *&pp.items, &pp.items)
-		}
-	}
-
-	fmt.Println("------------------------------------")
-
-	fmt.Printf("Incoming quote: %v     Pointer: %p\n", incoming_q, &incoming_q)
-*/
-	//ticker(bid_l, "Bids")
-	//ticker(ask_l, "Ask")
-
-	
-
 	Order_Book_print(OB,ORDER_BOOK_LENGTH)
-
+/*
 	// test ob insert
 
 	incoming_q = append(incoming_q, bid5) 
@@ -214,7 +217,7 @@ func main() {
 
 	fmt.Printf("Incoming after test of order: %v \n",incoming_q)
 
-	// test inseter reset
-
-
+*/
+	lb,vb,la,va:=find_best(OB)
+	fmt.Printf("\nTest best bid: %v %v \nTest best ask: %v %v \n",lb,vb,la,va)
 }
