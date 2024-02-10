@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	//"reflect"
 )
 
 
@@ -132,14 +131,31 @@ func ticker(list [ORDER_BOOK_LENGTH]*Queue, name string) {
 }
 
 
-func Order_Book_print(OB Order_Book, lenght_OB int8) {
+func Size_Level(level_list []Order)(size int){
+
+	for i:=0; i< len(level_list);i++{
+		size= size+int(level_list[i].volume)
+	}
+
+	return
+}
+
+
+
+func Order_Book_print(OB Order_Book, lenght_OB int8,size_only bool) {
 	//fmt.Printf("Order Book: %v  \n %v \n", OB, OB.ask)
 	fmt.Println("                  °")
 	fmt.Println("----------- Order Book --------------")
 	fmt.Println("            Bid        Ask ")
+	
 	for  i := 0; i < int(lenght_OB); i++ {
 
-		fmt.Printf("Level: %v | %v   -   %v  |\n", i, OB.bid[i], OB.ask[i])
+		if size_only{
+			fmt.Printf("| %v | - %v - | %v |\n",Size_Level(OB.bid[i].items),i,Size_Level(OB.ask[i].items))
+		}else{
+			fmt.Printf("Level: %v | %v   -   %v  |\n", i, OB.bid[i], OB.ask[i])
+		}
+		//Size_Level(OB.bid[i].items) //i, OB.bid[i].items, OB.ask[i].items)
 	}
 
 	fmt.Println("-------------------------------------")
@@ -148,7 +164,7 @@ func Order_Book_print(OB Order_Book, lenght_OB int8) {
 
 
 // if there is no best quote it will rerurn {0,[]}
-func find_best (ob Order_Book)(level_b int, best_b []Order,level_a int, best_a []Order){
+func find_best (ob Order_Book) (level_b int, best_b []Order,level_a int, best_a []Order) {
 	
 	fmt.Printf("##################################\n\nSearching for the BEST ASK\n")
 	for index := len(ob.bid)-1;index >= 0; index-- {
@@ -198,7 +214,8 @@ func main() {
 	inserter(&incoming_q, ask_l, bid_l)
 
 
-	Order_Book_print(OB,ORDER_BOOK_LENGTH)
+	Order_Book_print(OB,ORDER_BOOK_LENGTH,false)
+
 /*
 	// test ob insert
 
@@ -218,6 +235,10 @@ func main() {
 	fmt.Printf("Incoming after test of order: %v \n",incoming_q)
 
 */
+
 	lb,vb,la,va:=find_best(OB)
 	fmt.Printf("\nTest best bid: %v %v \nTest best ask: %v %v \n",lb,vb,la,va)
+	fmt.Printf("\n\nSize of:%v  ----->   %v  \n\n",la,Size_Level(va))
+
 }
+
