@@ -26,15 +26,50 @@ type Order struct {
 
 
 type Order_Filled struct {
-	//bid_ID int
-	//ask_ID int
-	og_bid Order // orgiginal quote
+	og_bid Order // original quote
 	og_ask Order // 
 	price  float32
-	vol_filled_ask int32
-	vol_filled_bid int32
+	vol_filled int32
 }
 
+
+func (bigger_order *Order) Partial_fill(other_order Order) Order_Filled {
+	
+	//bigger_order.volume = bigger_order.volume - other_order.volume
+
+	var ord_filled Order_Filled
+
+	if bigger_order.o_type=="bid" {
+
+		ord_filled:=Order_Filled{
+			og_bid: *bigger_order,
+			og_ask: other_order,
+			price: bigger_order.price,
+			vol_filled: other_order.volume,
+		}
+		bigger_order.volume = bigger_order.volume - other_order.volume
+		return ord_filled
+		//fmt.Printf("%v",ord_filled)
+
+	} else if bigger_order.o_type=="ask"{
+
+		ord_filled:=Order_Filled{
+			og_bid: other_order,
+			og_ask: *bigger_order,
+			price: bigger_order.price,
+			vol_filled: other_order.volume,
+		}
+		bigger_order.volume = bigger_order.volume - other_order.volume
+		
+		return ord_filled
+		//fmt.Printf("%v",ord_filled)
+	} else{
+		bigger_order.volume = bigger_order.volume - other_order.volume
+		return ord_filled
+	}
+		
+	
+}
 
 var l_order_filled []Order_Filled
 
@@ -77,6 +112,7 @@ type Order_Book struct {
 
 //////////// Matching Engine /////////////
 
+// Complete the overshooting cases
 func match(order_b Order_Book)(fill Order_Filled){
 
 	var matches [2]Order
@@ -86,18 +122,32 @@ func match(order_b Order_Book)(fill Order_Filled){
 
 
 	if lb==la {       // Normal match
-		if matches[0].volume == matches[1].volume{ // Same volume -> so we take out both ordes from the Queue
+		
+		if matches[0].volume == matches[1].volume { // Same volume -> so we take out both ordes from the Queue
+			
 			ask_f :=order_b.ask[la].Dequeue()
 			bid_f :=order_b.bid[lb].Dequeue()
+
 			fill=Order_Filled{
 				og_bid: bid_f,
 				og_ask: ask_f,
 				price: ask_f.price,
-				vol_filled_ask: ask_f.volume,
-				vol_filled_bid: bid_f.volume,
+				vol_filled: ask_f.volume,
+	
 			}
 			
-		}
+		}else if matches[0].volume > matches[1].volume{ // Ask>Bid Volume
+			bid_f :=order_b.bid[lb].Dequeue()
+
+			fill=order_b.ask[la].items[0].Partial_fill(bid_f) //modify ask
+			fmt.Printf("\nFill: %v (ask volume >bid vol)-------\n",fill)
+
+
+		}else if matches[0].volume < matches[1].volume{ // Ask<Bid Volume
+			ask_f :=order_b.ask[la].Dequeue()
+			fill=order_b.bid[lb].items[0].Partial_fill(ask_f) //modify ask
+			fmt.Printf("\nFill: %v (ask volume <bid vol)------\n",fill)
+		}	
 		
 	} else if lb>la { // Bid price is larger than the best Ask
 
@@ -106,8 +156,7 @@ func match(order_b Order_Book)(fill Order_Filled){
 	} else{
 		fmt.Printf("\n-----No match-----\n")
 	}
-	// var hitted []Order_Filled
-	//fill=append(fill,order_b.ask[la].Observe(),order_b.bid[lb].Observe())
+
 
 	return 	
 
@@ -129,6 +178,11 @@ var bid4 = Order{"bid", 9, 2}
 var bid5 = Order{"bid", 10, 15}
 var bido1 = Order{"bid", 2, 1}
 var bido2 = Order{"bid", 2, 2}
+// test 134
+var bido138 = Order{"bid", 10, 2}
+// test bid>ask
+var askbigger = Order{"ask", 9, 2} // it will interact with bid1
+
 
 
 var ask_l [ORDER_BOOK_LENGTH]*Queue
@@ -260,19 +314,17 @@ func main() {
 		bid_l[price_i] = &p_que
 	}
 	
-
-	incoming_q = append(incoming_q, or, or1, or2, bid1, bid2, bid3, bid4)
-
 	OB := Order_Book{ask_l, bid_l}
 
+	incoming_q = append(incoming_q, or, or2,or1, bid1, bid2, bid3, bid4)
 	inserter(&incoming_q, OB)
 
 	Order_Book_print(OB,ORDER_BOOK_LENGTH,false)
-
+/*
 	lb,vb,la,va:=find_best(OB)
 	fmt.Printf("\nTest best bid: %v %v \nTest best ask: %v %v \n",lb,vb,la,va)
 	fmt.Printf("\n\nSize of:%v  ----->   %v  \n\n",la,Size_Level(va))
-
+*/
 	//bid5
 	incoming_q = append(incoming_q, bid5)
 	inserter(&incoming_q, OB)
@@ -283,5 +335,34 @@ func main() {
 	fmt.Printf("\n\nFilled orders : %v\n\n",a)
 	fmt.Printf("\n\nList of Filled orders : %v\n\n",l_order_filled)
 	Order_Book_print(OB,ORDER_BOOK_LENGTH,false)
+
+
+	////////// test 138 askvol>bidvol
+	//bido138
+
+	incoming_q = append(incoming_q, bido138)
+	inserter(&incoming_q, OB)
+	b:= match(OB)
+	l_order_filled= append(l_order_filled, b)
+	fmt.Printf("\n\nFilled orders : %v\n\n",b)
+	fmt.Printf("\n\nList of Filled orders : %v\n\n",l_order_filled)
+	
+	Order_Book_print(OB,ORDER_BOOK_LENGTH,false)
+	
+
+	////////// test 146 askvol<bidvol
+	//askbigger
+
+	incoming_q = append(incoming_q, askbigger)
+	inserter(&incoming_q, OB)
+	c:= match(OB)
+	l_order_filled= append(l_order_filled, c)
+	fmt.Printf("\n\nFilled orders : %v\n\n",c)
+	fmt.Printf("\n\nList of Filled orders : %v\n\n",l_order_filled)
+	
+	Order_Book_print(OB,ORDER_BOOK_LENGTH,false)
+
+
+
 }
 
