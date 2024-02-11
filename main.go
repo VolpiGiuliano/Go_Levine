@@ -21,12 +21,29 @@ type Order struct {
 	o_type string
 	price  float32
 	volume int32
+	
 }
+
+
+type Order_Filled struct {
+	//bid_ID int
+	//ask_ID int
+	og_bid Order // orgiginal quote
+	og_ask Order // 
+	price  float32
+	vol_filled_ask int32
+	vol_filled_bid int32
+}
+
+
+var l_order_filled []Order_Filled
 
 /////////////Queue////////////////
 
 // Queue that the orders need to follow in any given price.
-// The order is first-in first-out (time priority) FIFO
+// The order is first-in first-out (time priority) FIFO.
+// To enter and to 
+// Observe gives the first in line Order without taking it out of the Queue
 type Queue struct {
 	items []Order
 }
@@ -42,6 +59,13 @@ func (q *Queue) Dequeue() Order {
 	return to_remove
 }
 
+func (q *Queue) Observe() Order {
+	to_see := q.items[0]
+
+	return to_see
+}
+
+
 ////////////////Order Book//////////////////
 
 type Order_Book struct {
@@ -50,6 +74,48 @@ type Order_Book struct {
 }
 
 ////////////////////////////////
+
+//////////// Matching Engine /////////////
+
+func match(order_b Order_Book)(fill Order_Filled){
+
+	var matches [2]Order
+	lb,_,la,_:=find_best(order_b)
+	matches[0]=order_b.ask[la].Observe()
+	matches[1]=order_b.bid[lb].Observe()
+
+
+	if lb==la {       // Normal match
+		if matches[0].volume == matches[1].volume{ // Same volume -> so we take out both ordes from the Queue
+			ask_f :=order_b.ask[la].Dequeue()
+			bid_f :=order_b.bid[lb].Dequeue()
+			fill=Order_Filled{
+				og_bid: bid_f,
+				og_ask: ask_f,
+				price: ask_f.price,
+				vol_filled_ask: ask_f.volume,
+				vol_filled_bid: bid_f.volume,
+			}
+			
+		}
+		
+	} else if lb>la { // Bid price is larger than the best Ask
+
+	} else if lb<la { // Ask price is larger than the best Bid
+
+	} else{
+		fmt.Printf("\n-----No match-----\n")
+	}
+	// var hitted []Order_Filled
+	//fill=append(fill,order_b.ask[la].Observe(),order_b.bid[lb].Observe())
+
+	return 	
+
+}
+
+
+//////////////////////////////////////
+
 // Made up orders for testing
 
 var or = Order{"ask", 10, 15}
@@ -60,7 +126,7 @@ var bid2 = Order{"bid", 9, 1}
 var bid3 = Order{"bid", 7, 100}
 var bid4 = Order{"bid", 9, 2}
 
-var bid5 = Order{"bid", 5, 5}
+var bid5 = Order{"bid", 10, 15}
 var bido1 = Order{"bid", 2, 1}
 var bido2 = Order{"bid", 2, 2}
 
@@ -75,7 +141,10 @@ var incoming_q []Order
 
 
 // It puts the single Order in the Order Book
-func inserter(l_in_quo *[]Order, l_ask [ORDER_BOOK_LENGTH]*Queue, l_bid [ORDER_BOOK_LENGTH]*Queue) {
+func inserter(l_in_quo *[]Order, order_bo Order_Book) {
+
+	l_ask:= order_bo.ask
+	l_bid := order_bo.bid
 
 	fmt.Println("                  §")
 	fmt.Printf("++++++++++++++++++++++++++++++++++++\nStart insertion\nINFUNC Incoming quote: %v     Pointer: %p\n", l_in_quo, l_in_quo)
@@ -114,21 +183,6 @@ func inserter(l_in_quo *[]Order, l_ask [ORDER_BOOK_LENGTH]*Queue, l_bid [ORDER_B
 
 }
 
-
-func ticker(list [ORDER_BOOK_LENGTH]*Queue, name string) {
-
-	fmt.Printf("\nList %v\n", name)
-
-	for index, pp := range list {
-
-		if len(pp.items) != 0 {
-			fmt.Printf("Value: %v   %v  | Point:%v     %p\n", index, pp, *&pp.items[0], &pp.items[0])
-		} else {
-			fmt.Printf("Value: %v   %v  | Point:%v     %p\n", index, pp, *&pp.items, &pp.items)
-		}
-
-	}
-}
 
 
 func Size_Level(level_list []Order)(size int){
@@ -211,34 +265,23 @@ func main() {
 
 	OB := Order_Book{ask_l, bid_l}
 
-	inserter(&incoming_q, ask_l, bid_l)
-
+	inserter(&incoming_q, OB)
 
 	Order_Book_print(OB,ORDER_BOOK_LENGTH,false)
-
-/*
-	// test ob insert
-
-	incoming_q = append(incoming_q, bid5) 
-	inserter(&incoming_q, OB.ask, OB.bid)
-	Order_Book_print(OB,ORDER_BOOK_LENGTH)
-
-	fmt.Printf("Incoming after test of 5: %v \n",incoming_q)
-	// test que order
-
-	incoming_q = append(incoming_q, bido1,bido2) 
-	inserter(&incoming_q, OB.ask, OB.bid)
-	Order_Book_print(OB,ORDER_BOOK_LENGTH)
-	fmt.Printf("Taking out: %v \n",OB.bid[2].Dequeue())
-	Order_Book_print(OB,ORDER_BOOK_LENGTH)
-
-	fmt.Printf("Incoming after test of order: %v \n",incoming_q)
-
-*/
 
 	lb,vb,la,va:=find_best(OB)
 	fmt.Printf("\nTest best bid: %v %v \nTest best ask: %v %v \n",lb,vb,la,va)
 	fmt.Printf("\n\nSize of:%v  ----->   %v  \n\n",la,Size_Level(va))
 
+	//bid5
+	incoming_q = append(incoming_q, bid5)
+	inserter(&incoming_q, OB)
+
+	Order_Book_print(OB,ORDER_BOOK_LENGTH,false)
+	a:= match(OB)
+	l_order_filled= append(l_order_filled, a)
+	fmt.Printf("\n\nFilled orders : %v\n\n",a)
+	fmt.Printf("\n\nList of Filled orders : %v\n\n",l_order_filled)
+	Order_Book_print(OB,ORDER_BOOK_LENGTH,false)
 }
 
