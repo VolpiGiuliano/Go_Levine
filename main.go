@@ -150,8 +150,68 @@ func match(order_b Order_Book)(fill Order_Filled){
 		}	
 		
 	} else if lb>la { // Bid price is larger than the best Ask
+				
+
+		if matches[0].volume == matches[1].volume { // Same volume -> so we take out both ordes from the Queue
+			
+			ask_f :=order_b.ask[la].Dequeue()
+			bid_f :=order_b.bid[lb].Dequeue()
+
+			fill=Order_Filled{
+				og_bid: bid_f,
+				og_ask: ask_f,
+				price: ask_f.price,
+				vol_filled: ask_f.volume,
+	
+			}
+			
+		}else if matches[0].volume > matches[1].volume{ // Ask>Bid Volume
+			bid_f :=order_b.bid[lb].Dequeue()
+
+			fill=order_b.ask[la].items[0].Partial_fill(bid_f) //modify ask
+			fmt.Printf("\nFill: %v (ask volume >bid vol)-------\n",fill)
+
+
+		}else if matches[0].volume < matches[1].volume{ // Ask<Bid Volume
+			ask_f :=order_b.ask[la].Dequeue()
+			fill=order_b.bid[lb].items[0].Partial_fill(ask_f) //modify ask
+			fill.price=ask_f.price
+			fmt.Printf("\nFill: %v (ask volume <bid vol)------\n",fill)
+		}	
+
+
+
 
 	} else if lb<la { // Ask price is larger than the best Bid
+		
+		if matches[0].volume == matches[1].volume { // Same volume -> so we take out both ordes from the Queue
+			
+			ask_f :=order_b.ask[la].Dequeue()
+			bid_f :=order_b.bid[lb].Dequeue()
+
+			fill=Order_Filled{
+				og_bid: bid_f,
+				og_ask: ask_f,
+				price: bid_f.price,
+				vol_filled: ask_f.volume,
+	
+			}
+			
+		}else if matches[0].volume > matches[1].volume{ // Ask>Bid Volume
+			bid_f :=order_b.bid[lb].Dequeue()
+
+			fill=order_b.ask[la].items[0].Partial_fill(bid_f) //modify ask
+			fill.price=bid_f.price
+			fmt.Printf("\nFill: %v (ask volume >bid vol)-------\n",fill)
+
+
+		}else if matches[0].volume < matches[1].volume{ // Ask<Bid Volume
+			ask_f :=order_b.ask[la].Dequeue()
+			fill=order_b.bid[lb].items[0].Partial_fill(ask_f) //modify ask
+			fmt.Printf("\nFill: %v (ask volume <bid vol)------\n",fill)
+		}	
+		
+
 
 	} else{
 		fmt.Printf("\n-----No match-----\n")
@@ -361,7 +421,6 @@ func main() {
 	fmt.Printf("\n\nList of Filled orders : %v\n\n",l_order_filled)
 	
 	Order_Book_print(OB,ORDER_BOOK_LENGTH,false)
-
 
 
 }
