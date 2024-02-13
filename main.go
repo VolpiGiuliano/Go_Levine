@@ -2,6 +2,10 @@ package main
 
 import (
 	"fmt"
+	"strings"
+	"os"
+	"bufio"
+	"strconv"
 )
 
 
@@ -19,7 +23,7 @@ const(
 // volume : int32
 type Order struct {
 	o_type string
-	price  float32
+	price  int32
 	volume int32
 	
 }
@@ -28,7 +32,7 @@ type Order struct {
 type Order_Filled struct {
 	og_bid Order // original quote
 	og_ask Order // 
-	price  float32
+	price  int32
 	vol_filled int32
 }
 
@@ -112,14 +116,15 @@ type Order_Book struct {
 
 //////////// Matching Engine /////////////
 
-// Complete the overshooting cases
+// Resolve the fact that every quoted is matced
+// if the order filled is empty do not considered in the
+// loop
 func match(order_b Order_Book)(fill Order_Filled){
 
 	var matches [2]Order
 	lb,_,la,_:=find_best(order_b)
 	matches[0]=order_b.ask[la].Observe()
 	matches[1]=order_b.bid[lb].Observe()
-
 
 	if lb==la {       // Normal match
 		
@@ -149,6 +154,7 @@ func match(order_b Order_Book)(fill Order_Filled){
 			fmt.Printf("\nFill: %v (ask volume <bid vol)------\n",fill)
 		}	
 		
+	// overshoot
 	} else if lb>la { // Bid price is larger than the best Ask
 				
 
@@ -175,13 +181,13 @@ func match(order_b Order_Book)(fill Order_Filled){
 		}else if matches[0].volume < matches[1].volume{ // Ask<Bid Volume
 			ask_f :=order_b.ask[la].Dequeue()
 			fill=order_b.bid[lb].items[0].Partial_fill(ask_f) //modify ask
-			fill.price=ask_f.price
+			//fill.price=ask_f.price
 			fmt.Printf("\nFill: %v (ask volume <bid vol)------\n",fill)
 		}	
 
 
-
-
+/*
+//////////// no match!!!!//////////////////////////////////
 	} else if lb<la { // Ask price is larger than the best Bid
 		
 		if matches[0].volume == matches[1].volume { // Same volume -> so we take out both ordes from the Queue
@@ -211,10 +217,15 @@ func match(order_b Order_Book)(fill Order_Filled){
 			fmt.Printf("\nFill: %v (ask volume <bid vol)------\n",fill)
 		}	
 		
-
+*/
 
 	} else{
 		fmt.Printf("\n-----No match-----\n")
+
+		// if no order is filled the price will be -1
+		fill=Order_Filled{
+			price: -1,
+		}
 	}
 
 
@@ -380,18 +391,63 @@ func main() {
 	inserter(&incoming_q, OB)
 
 	Order_Book_print(OB,ORDER_BOOK_LENGTH,false)
+
+	reader := bufio.NewReader(os.Stdin)
+
+	for{
+		fmt.Print("Enter your bid or ask: ")
+		bid_ask, _ := reader.ReadString('\n')
+		bid_ask = strings.TrimSpace(bid_ask)
+
+		fmt.Print("Enter your volume: ")
+		volu, _ := reader.ReadString('\n')
+		volu = strings.TrimSpace(volu)
+		volum, _ := strconv.Atoi(volu)
+
+		fmt.Print("Enter your price: ")
+		price, _ := reader.ReadString('\n')
+		price = strings.TrimSpace(price)
+		pric, _ := strconv.Atoi(price)
+
+		inord:= Order{
+			o_type:bid_ask,
+			price:int32(pric),
+			volume:int32(volum),
+			}
+
+		incoming_q = append(incoming_q, inord)
+		inserter(&incoming_q, OB)
+
+		Order_Book_print(OB,ORDER_BOOK_LENGTH,false)
+		a:= match(OB)
+		if a.price!=-1{ // if there is no match
+			l_order_filled= append(l_order_filled, a)
+		}
+
+		Order_Book_print(OB,ORDER_BOOK_LENGTH,false)
+		fmt.Printf("\n%v\n",l_order_filled)
+	}
 /*
 	lb,vb,la,va:=find_best(OB)
 	fmt.Printf("\nTest best bid: %v %v \nTest best ask: %v %v \n",lb,vb,la,va)
 	fmt.Printf("\n\nSize of:%v  ----->   %v  \n\n",la,Size_Level(va))
 */
+	/*
 	//bid5
 	incoming_q = append(incoming_q, bid5)
 	inserter(&incoming_q, OB)
 
 	Order_Book_print(OB,ORDER_BOOK_LENGTH,false)
-	a:= match(OB)
-	l_order_filled= append(l_order_filled, a)
+
+	*/
+
+	
+	//a:= match(OB)
+	//l_order_filled= append(l_order_filled, a)
+
+
+
+	/*
 	fmt.Printf("\n\nFilled orders : %v\n\n",a)
 	fmt.Printf("\n\nList of Filled orders : %v\n\n",l_order_filled)
 	Order_Book_print(OB,ORDER_BOOK_LENGTH,false)
@@ -422,6 +478,6 @@ func main() {
 	
 	Order_Book_print(OB,ORDER_BOOK_LENGTH,false)
 
-
+	*/
 }
 
