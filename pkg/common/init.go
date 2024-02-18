@@ -7,5 +7,6 @@ import (
 
 func init() {
 	gob.Register(Order{})
+	gob.Register(User{})
 	// Register other types if needed
 }

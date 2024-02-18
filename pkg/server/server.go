@@ -12,9 +12,7 @@ import (
 
 
 var or = common.Order{O_type:"ask", Price:10, Volume:15}
-
 var or1 = common.Order{O_type:"ask",Price: 10,Volume: 1}
-
 var or2 = common.Order{O_type:"ask",Price: 10, Volume:5}
 var bid1 = common.Order{O_type:"bid",Price: 9,Volume: 9}
 var bid2 = common.Order{O_type:"bid",Price: 9, Volume:1}
@@ -122,6 +120,7 @@ func engine(list_incoming *[]common.Order,Or_Bo *common.Order_Book,list_filled *
     }
 }
 
+
 // handleConnection handles a single client connection
 func handleConnection(conn net.Conn,list *[]common.Order) {
 	fmt.Printf("Collegato! %v\n",conn.RemoteAddr())
@@ -158,19 +157,20 @@ func handleConnection(conn net.Conn,list *[]common.Order) {
                 response := "Response to MessageOne"
                 fmt.Println("Sending response:", response)
                 conn.Write([]byte(response))
-
+            
+            // User
             case 2:
                 // Decode and handle MessageTwo
-                var list_q []common.Order
-                err := decoder.Decode(&list_q)
+                var user_info common.User
+                err := decoder.Decode(&user_info)
                 if err != nil {
-                    fmt.Println("Error decoding MessageTwo:", err)
+                    fmt.Println("Error decoding User:", err)
                     return
                 }
-                fmt.Printf("Received MessageTwo: %+v\n", list_q)
+                fmt.Printf("Received User info: %+v\n", user_info)
 
                 // Respond to MessageTwo
-                response := "Response to MessageTwo"
+                response := fmt.Sprintf("Response to User %v",user_info.Name)
                 fmt.Println("Sending response:", response)
                 conn.Write([]byte(response))
 

@@ -49,11 +49,27 @@ func StartClient() {
     defer conn.Close()
 
     reader := bufio.NewReader(os.Stdin)
+
+	// name
+	fmt.Printf("\nEnter your name: ")
+	name, _ := reader.ReadString('\n')
+	name = strings.TrimSpace(name)
+	User_info := common.User{Name:name}
+
+	err = sendMessage(conn, 2, User_info)
+	if err != nil {
+		fmt.Println("Error sending User_info:", err)
+		return
+	}
+	fmt.Printf("\nInfo sent: %v\n",User_info)
+
+ 
+
     // loop until there are no more matches
 	var exi string="n"
 	for{
 		
-		fmt.Print("Wanna: \n (q) Quit\n (t) Trade")
+		fmt.Print("\nWanna: \n (q) Quit\n (t) Trade\n\n")
 		inp, _ := reader.ReadString('\n')
 		exi = strings.TrimSpace(inp)
 		
@@ -73,30 +89,6 @@ func StartClient() {
 			}
 			fmt.Printf("\nOrder sent: %v\n",inOrd)
 		}
-
-		/*
-
-		fmt.Print("Enter your position (bid/ask): ")
-		bid_ask_in, _ := reader.ReadString('\n')
-		bid_ask := strings.TrimSpace(bid_ask_in)
-
-		fmt.Print("Enter your volume: ")
-		volu, _ := reader.ReadString('\n')
-		volu = strings.TrimSpace(volu)
-		volum, _ := strconv.Atoi(volu)
-
-		fmt.Print("Enter your price: ")
-		price, _ := reader.ReadString('\n')
-		price = strings.TrimSpace(price)
-		pric, _ := strconv.Atoi(price)
-
-		inOrd:= common.Order{
-			O_type:bid_ask,
-			Price:int32(pric),
-			Volume:int32(volum),
-			}
-		*/
-
 
 	}
     // Client implementation for interacting with the server

@@ -10,6 +10,9 @@ const(
 	ORDER_BOOK_LENGTH int = 20
 )
 
+type User struct{
+	Name string
+}
 
 // Rappresents the single order.
 //
@@ -102,6 +105,15 @@ func (q *Queue) Observe() Order {
 }
 
 
+func (q *Queue) Is_Empty() bool {
+	var is bool
+	if len(q.Items)==0{
+		is= true
+	} else{
+		is= false
+	}
+	return is
+}
 ////////////////Order Book//////////////////
 
 type Order_Book struct {
@@ -119,7 +131,20 @@ type Order_Book struct {
 func Match(order_b Order_Book)(fill Order_Filled){
 
 	var matches [2]Order
-	lb,_,la,_:=find_best(order_b)
+	lb,_,la,_:=Find_best(order_b)
+
+	if order_b.Ask[la].Is_Empty() || order_b.Bid[lb].Is_Empty(){
+
+		fmt.Printf("\n-----No match-----\nEmpy list\n\nAsk list: %v\nBid list: %v",order_b.Ask[la], order_b.Bid[lb])
+
+		// if no order is filled the price will be -1
+		fill=Order_Filled{
+			Price: -1,
+		}
+		return
+	}
+
+
 	matches[0]=order_b.Ask[la].Observe()
 	matches[1]=order_b.Bid[lb].Observe()
 
@@ -183,6 +208,13 @@ func Match(order_b Order_Book)(fill Order_Filled){
 		}	
 
 
+	} else if  len(matches[1].O_type)==0 || len(matches[0].O_type)==0 {
+		fmt.Printf("\n-----No match-----\nEmpy list\n\n%v %v",matches[0],matches[1])
+
+		// if no order is filled the price will be -1
+		fill=Order_Filled{
+			Price: -1,
+		}
 
 	} else{
 		fmt.Printf("\n-----No match-----\n")
@@ -308,9 +340,9 @@ func Order_Book_print(OB Order_Book, lenght_OB int,size_only bool) {
 
 
 // if there is no best quote it will rerurn {0,[]}
-func find_best (ob Order_Book) (level_b int, best_b []Order,level_a int, best_a []Order) {
+func Find_best (ob Order_Book) (level_b int, best_b []Order,level_a int, best_a []Order) {
 	
-	fmt.Printf("##################################\n\nSearching for the BEST ASK\n")
+	fmt.Printf("##################################\n\nSearching for the BEST BID\n")
 	for index := len(ob.Bid)-1;index >= 0; index-- {
 		fmt.Printf("Index: %v | Items: %v  ->len:%v\n",index, ob.Bid[index].Items,len(ob.Bid[index].Items))
 
