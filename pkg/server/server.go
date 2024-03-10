@@ -78,7 +78,6 @@ func StartServer() {
         go handleConnection(conn,&incoming_q)
 
         if len(incoming_q)!=0{
-
             common.Inserter(&incoming_q, OB)
             common.Order_Book_print(OB,common.ORDER_BOOK_LENGTH,false)
         }
@@ -90,14 +89,16 @@ func StartServer() {
 }
 
 func engine(list_incoming *[]common.Order,Or_Bo *common.Order_Book,list_filled *[]common.Order_Filled){
+
     for{
 
         if len(*list_incoming)!=0{
 
             common.Inserter(list_incoming,*Or_Bo)
             Filled_Or:= common.Match(*Or_Bo)
+            common.Order_Book_print(*Or_Bo,common.ORDER_BOOK_LENGTH,false)
             if Filled_Or.Price==-1{
-                break
+                continue
             }
             *list_filled = append(*list_filled,Filled_Or)
             common.Order_Book_print(*Or_Bo,common.ORDER_BOOK_LENGTH,false)
@@ -115,6 +116,7 @@ func engine(list_incoming *[]common.Order,Or_Bo *common.Order_Book,list_filled *
 
             }
             fmt.Printf("End main engine loop: %v",*list_filled)
+            common.Order_Book_print(*Or_Bo,common.ORDER_BOOK_LENGTH,false)
             
         }
     }

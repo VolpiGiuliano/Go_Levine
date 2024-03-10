@@ -45,7 +45,7 @@ func StartClient() {
         fmt.Println("Error connecting to server:", err)
         return
     }
-	
+	fmt.Printf("\n\nNetwork: %v\nString: %v\n",conn.LocalAddr().Network(),conn.LocalAddr().String())
     defer conn.Close()
 
     reader := bufio.NewReader(os.Stdin)
