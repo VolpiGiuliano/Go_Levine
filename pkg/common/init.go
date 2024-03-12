@@ -5,8 +5,9 @@ import (
 	"encoding/gob"
 )
 
+// Put all the variables that are sent
 func init() {
 	gob.Register(Order{})
 	gob.Register(User{})
-	// Register other types if needed
+	
 }
