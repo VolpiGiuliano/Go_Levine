@@ -4,6 +4,7 @@ import (
     "fmt"
     "net"
 	"Go_net/pkg/common"
+    "Go_net/pkg/exchange"
     "encoding/gob"
 )
 
@@ -26,11 +27,10 @@ var bid_l [common.ORDER_BOOK_LENGTH]*common.Queue
 var incoming_q []common.Order
 var filled_quotes []common.Order_Filled
 
-
+var type_ob bool
 
 // StartServer starts the server
 func StartServer() {
-    
     ///////////////////////////////////////////////////////////////////////////////
 
 	for price_i := range ask_l {
@@ -47,7 +47,7 @@ func StartServer() {
 
 	incoming_q = append(incoming_q, or, or2,or1, bid1, bid2, bid3, bid4)
 
-	common.Inserter(&incoming_q, OB)
+	exchange.Inserter(&incoming_q, OB)
 	
 	common.Order_Book_print(OB,common.ORDER_BOOK_LENGTH,false)
 
@@ -63,7 +63,7 @@ func StartServer() {
 
     fmt.Println("Server is listening on port 12345")
 
-    go engine(&incoming_q,&OB,&filled_quotes)
+    go exchange.Engine(&incoming_q,&OB,&filled_quotes)
 
 
     for {
@@ -73,12 +73,11 @@ func StartServer() {
             fmt.Println("Error accepting connection:", err)
             continue
         }
-
-        // Handle connection in a goroutine
         go handleConnection(conn,&incoming_q)
 
+
         if len(incoming_q)!=0{
-            common.Inserter(&incoming_q, OB)
+            exchange.Inserter(&incoming_q, OB)
             common.Order_Book_print(OB,common.ORDER_BOOK_LENGTH,false)
         }
         common.Order_Book_print(OB,common.ORDER_BOOK_LENGTH,false)
@@ -88,39 +87,6 @@ func StartServer() {
 
 }
 
-func engine(list_incoming *[]common.Order,Or_Bo *common.Order_Book,list_filled *[]common.Order_Filled){
-
-    for{
-
-        if len(*list_incoming)!=0{
-
-            common.Inserter(list_incoming,*Or_Bo)
-            Filled_Or:= common.Match(*Or_Bo)
-            common.Order_Book_print(*Or_Bo,common.ORDER_BOOK_LENGTH,false)
-            if Filled_Or.Price==-1{
-                continue
-            }
-            *list_filled = append(*list_filled,Filled_Or)
-            common.Order_Book_print(*Or_Bo,common.ORDER_BOOK_LENGTH,false)
-
-            for { // the -1 means that there is no match
-
-                Filled_Or:= common.Match(*Or_Bo)
-
-                if Filled_Or.Price==-1{
-                    break
-                }
-
-                *list_filled = append(*list_filled,Filled_Or)
-                common.Order_Book_print(*Or_Bo,common.ORDER_BOOK_LENGTH,false)
-
-            }
-            fmt.Printf("End main engine loop: %v",*list_filled)
-            common.Order_Book_print(*Or_Bo,common.ORDER_BOOK_LENGTH,false)
-            
-        }
-    }
-}
 
 
 // handleConnection handles a single client connection
@@ -130,7 +96,6 @@ func handleConnection(conn net.Conn,list *[]common.Order) {
 
     // Server implementation for handling client connections
     // ...
-    //decoder := gob.NewDecoder(conn)
 
     for {
         decoder := gob.NewDecoder(conn)
@@ -143,7 +108,7 @@ func handleConnection(conn net.Conn,list *[]common.Order) {
 		}
 
         switch messageType {
-            case 1:
+            case 1: // Recived an Order
                 // Decode and handle MessageOne
 
                 var order_reci common.Order
@@ -160,8 +125,8 @@ func handleConnection(conn net.Conn,list *[]common.Order) {
                 fmt.Println("Sending response:", response)
                 conn.Write([]byte(response))
             
-            // User
-            case 2:
+            
+            case 2:// User info
                 // Decode and handle MessageTwo
                 var user_info common.User
                 err := decoder.Decode(&user_info)

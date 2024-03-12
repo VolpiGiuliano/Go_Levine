@@ -91,8 +91,7 @@ func StartClient() {
 		}
 
 	}
-    // Client implementation for interacting with the server
-    // ...
+
 }
 
 

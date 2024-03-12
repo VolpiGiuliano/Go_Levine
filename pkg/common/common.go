@@ -2,12 +2,13 @@ package common
 
 import (
 	"fmt"
-
+	"encoding/gob"
+	"net"
 )
 
 
 const(
-	ORDER_BOOK_LENGTH int = 20
+	ORDER_BOOK_LENGTH int = 40
 )
 
 type User struct{
@@ -83,6 +84,7 @@ var l_order_filled []Order_Filled
 // The order is first-in first-out (time priority) FIFO.
 // To enter and to 
 // Observe gives the first in line Order without taking it out of the Queue
+
 type Queue struct {
 	Items []Order
 }
@@ -114,6 +116,7 @@ func (q *Queue) Is_Empty() bool {
 	}
 	return is
 }
+
 ////////////////Order Book//////////////////
 
 type Order_Book struct {
@@ -121,138 +124,7 @@ type Order_Book struct {
 	Bid [ORDER_BOOK_LENGTH]*Queue
 }
 
-////////////////////////////////
 
-//////////// Matching Engine /////////////
-
-// Resolve the fact that every quoted is matced
-// if the order filled is empty do not considered in the
-// loop
-func Match(order_b Order_Book)(fill Order_Filled){
-
-	var matches [2]Order
-	lb,_,la,_:=Find_best(order_b)
-
-	if order_b.Ask[la].Is_Empty() || order_b.Bid[lb].Is_Empty(){
-
-		fmt.Printf("\n-----No match-----\nEmpy list\n\nAsk list: %v\nBid list: %v",order_b.Ask[la], order_b.Bid[lb])
-
-		// if no order is filled the price will be -1
-		fill=Order_Filled{
-			Price: -1,
-		}
-		return
-	}
-
-
-	matches[0]=order_b.Ask[la].Observe()
-	matches[1]=order_b.Bid[lb].Observe()
-
-	if lb==la {       // Normal match
-		
-		if matches[0].Volume == matches[1].Volume { // Same volume -> so we take out both ordes from the Queue
-			
-			ask_f :=order_b.Ask[la].Dequeue()
-			bid_f :=order_b.Bid[lb].Dequeue()
-
-			fill=Order_Filled{
-				Og_bid: bid_f,
-				Og_ask: ask_f,
-				Price: ask_f.Price,
-				Vol_filled: ask_f.Volume,
-	
-			}
-			
-		}else if matches[0].Volume > matches[1].Volume{ // Ask>Bid Volume
-			bid_f :=order_b.Bid[lb].Dequeue()
-
-			fill=order_b.Ask[la].Items[0].Partial_fill(bid_f) //modify ask
-			fmt.Printf("\nFill: %v (ask volume >bid vol)-------\n",fill)
-
-
-		}else if matches[0].Volume < matches[1].Volume{ // Ask<Bid Volume
-			ask_f :=order_b.Ask[la].Dequeue()
-			fill=order_b.Bid[lb].Items[0].Partial_fill(ask_f) //modify ask
-			fmt.Printf("\nFill: %v (ask volume <bid vol)------\n",fill)
-		}	
-		
-	// overshoot
-	} else if lb>la { // Bid price is larger than the best Ask
-				
-
-		if matches[0].Volume == matches[1].Volume { // Same volume -> so we take out both ordes from the Queue
-			
-			ask_f :=order_b.Ask[la].Dequeue()
-			bid_f :=order_b.Bid[lb].Dequeue()
-
-			fill=Order_Filled{
-				Og_bid: bid_f,
-				Og_ask: ask_f,
-				Price: ask_f.Price,
-				Vol_filled: ask_f.Volume,
-	
-			}
-			
-		}else if matches[0].Volume > matches[1].Volume{ // Ask>Bid Volume
-			bid_f :=order_b.Bid[lb].Dequeue()
-
-			fill=order_b.Ask[la].Items[0].Partial_fill(bid_f) //modify ask
-			fmt.Printf("\nFill: %v (ask volume >bid vol)-------\n",fill)
-
-
-		}else if matches[0].Volume < matches[1].Volume{ // Ask<Bid Volume
-			ask_f :=order_b.Ask[la].Dequeue()
-			fill=order_b.Bid[lb].Items[0].Partial_fill(ask_f) //modify ask
-			//fill.price=ask_f.price
-			fmt.Printf("\nFill: %v (ask volume <bid vol)------\n",fill)
-		}	
-
-
-	} else if  len(matches[1].O_type)==0 || len(matches[0].O_type)==0 {
-		fmt.Printf("\n-----No match-----\nEmpy list\n\n%v %v",matches[0],matches[1])
-
-		// if no order is filled the price will be -1
-		fill=Order_Filled{
-			Price: -1,
-		}
-
-	} else{
-		fmt.Printf("\n-----No match-----\n")
-
-		// if no order is filled the price will be -1
-		fill=Order_Filled{
-			Price: -1,
-		}
-	}
-
-	//Order_Book_print()
-
-	return 	fill
-
-}
-
-
-//////////////////////////////////////
-
-// Made up orders for testing
-/*
-var or = Order{"ask", 10, 15}
-var or1 = Order{"ask", 10, 1}
-var or2 = Order{"ask", 10, 5}
-var bid1 = Order{"bid", 9, 9}
-var bid2 = Order{"bid", 9, 1}
-var bid3 = Order{"bid", 7, 100}
-var bid4 = Order{"bid", 9, 2}
-
-var bid5 = Order{"bid", 10, 15}
-var bido1 = Order{"bid", 2, 1}
-var bido2 = Order{"bid", 2, 2}
-// test 134
-var bido138 = Order{"bid", 10, 2}
-// test bid>ask
-var askbigger = Order{"ask", 9, 2} // it will interact with bid1
-
-*/
 
 var ask_l [ORDER_BOOK_LENGTH]*Queue
 var bid_l [ORDER_BOOK_LENGTH]*Queue
@@ -263,51 +135,9 @@ var incoming_q []Order
 
 
 
-// It puts the single Order in the Order Book
-func Inserter(l_in_quo *[]Order, order_bo Order_Book) {
-
-	l_ask:= order_bo.Ask
-	l_bid := order_bo.Bid
-
-	fmt.Println("                  §")
-	fmt.Printf("++++++++++++++++++++++++++++++++++++\nStart insertion\nINFUNC Incoming quote: %v     Pointer: %p\n", l_in_quo, l_in_quo)
-
-	switch {
-	case len(*l_in_quo) == 1 && (*l_in_quo)[0].O_type == "ask":
-
-		l_ask[int((*l_in_quo)[0].Price)].Enqueue((*l_in_quo)[0])
-		//return
-
-	case len(*l_in_quo) == 1 && (*l_in_quo)[0].O_type == "bid":
-
-		l_bid[int((*l_in_quo)[0].Price)].Enqueue((*l_in_quo)[0])
-		//return
-
-	case len(*l_in_quo) > 1:
-
-		for _, v := range *l_in_quo {
-			if v.O_type == "ask" {
-				l_ask[int(v.Price)].Enqueue(v)
-			} else if v.O_type == "bid" {
-				l_bid[int(v.Price)].Enqueue(v)
-			}
-		}
-
-	case len(*l_in_quo) == 0:
-		fmt.Printf("No incoming quotes\n++++++++++++++++++++++++++++++++++++\n")
-		fmt.Println("                  §")
-		return
-
-	}
-
-	*l_in_quo = nil
-	fmt.Printf("End insertion\nINFUNC Incoming quote: %v     Pointer: %p\n++++++++++++++++++++++++++++++++++++\n", l_in_quo, l_in_quo)
-	fmt.Println("                  §")
-
-}
 
 
-
+// Fuction usefull for the Order_Book_print()
 func Size_Level(level_list []Order)(size int){
 
 	for i:=0; i< len(level_list);i++{
@@ -316,7 +146,6 @@ func Size_Level(level_list []Order)(size int){
 
 	return
 }
-
 
 
 func Order_Book_print(OB Order_Book, lenght_OB int,size_only bool) {
@@ -368,4 +197,28 @@ func Find_best (ob Order_Book) (level_b int, best_b []Order,level_a int, best_a 
 	}
 	fmt.Printf("\n##################################\n\n")
 	return
+}
+
+
+
+
+// connections
+
+func SendMessage(conn net.Conn, messageType int, data interface{}) error {
+	// Create a new encoder for writing messages
+	encoder := gob.NewEncoder(conn)
+
+	// Encode the message type
+	err := encoder.Encode(messageType)
+	if err != nil {
+		return fmt.Errorf("error encoding message type: %v", err)
+	}
+
+	// Encode and send the actual data
+	err = encoder.Encode(data)
+	if err != nil {
+		return fmt.Errorf("error encoding data: %v", err)
+	}
+
+	return nil
 }
