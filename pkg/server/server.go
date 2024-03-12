@@ -10,8 +10,6 @@ import (
 
 
 
-
-
 var or = common.Order{O_type:"ask", Price:10, Volume:15}
 var or1 = common.Order{O_type:"ask",Price: 10,Volume: 1}
 var or2 = common.Order{O_type:"ask",Price: 10, Volume:5}
@@ -28,6 +26,8 @@ var incoming_q []common.Order
 var filled_quotes []common.Order_Filled
 
 var type_ob bool
+
+
 
 // StartServer starts the server
 func StartServer() {

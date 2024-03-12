@@ -7,60 +7,75 @@ import (
 )
 
 
-const(
-	ORDER_BOOK_LENGTH int = 40
-)
 
-
-
-
-/////////////Queue////////////////
-
-// Queue that the orders need to follow in any given price.
-// The order is first-in first-out (time priority) FIFO.
-// To enter and to 
-// Observe gives the first in line Order without taking it out of the Queue
+///////////////Variables///////////////////////
 /*
-type Queue struct {
-	Items []common.Order
-}
+var or = common.Order{O_type:"ask", Price:10, Volume:15}
+var or1 = common.Order{O_type:"ask",Price: 10,Volume: 1}
+var or2 = common.Order{O_type:"ask",Price: 10, Volume:5}
+var bid1 = common.Order{O_type:"bid",Price: 9,Volume: 9}
+var bid2 = common.Order{O_type:"bid",Price: 9, Volume:1}
+var bid3 = common.Order{O_type:"bid",Price: 7,Volume: 100}
+var bid4 = common.Order{O_type:"bid",Price: 9,Volume: 2}
+*/
 
-func (q *Queue) Enqueue(i common.Order) {
-	q.Items = append(q.Items, i)
-}
+/*
+var filled_quotes []common.Order_Filled
 
-func (q *Queue) Dequeue() common.Order {
-	to_remove := q.Items[0]
-	q.Items = q.Items[1:]
+var type_ob bool
 
-	return to_remove
-}
+var ask_l [common.ORDER_BOOK_LENGTH]*common.Queue
+var bid_l [common.ORDER_BOOK_LENGTH]*common.Queue
 
-func (q *Queue) Observe() common.Order {
-	to_see := q.Items[0]
-
-	return to_see
-}
+var incoming_q []common.Order
+*/
+/////////////////////////////////////////
 
 
-func (q *Queue) Is_Empty() bool {
-	var is bool
-	if len(q.Items)==0{
-		is= true
-	} else{
-		is= false
+// It puts the single Order in the Order Book
+func Inserter(l_in_quo *[]common.Order, order_bo common.Order_Book) {
+
+	l_ask:= order_bo.Ask
+	l_bid := order_bo.Bid
+
+	fmt.Println("                  §")
+	fmt.Printf("++++++++++++++++++++++++++++++++++++\nStart insertion\nINFUNC Incoming quote: %v     Pointer: %p\n", l_in_quo, l_in_quo)
+
+	switch {
+	case len(*l_in_quo) == 1 && (*l_in_quo)[0].O_type == "ask":
+
+		l_ask[int((*l_in_quo)[0].Price)].Enqueue((*l_in_quo)[0])
+		//return
+
+	case len(*l_in_quo) == 1 && (*l_in_quo)[0].O_type == "bid":
+
+		l_bid[int((*l_in_quo)[0].Price)].Enqueue((*l_in_quo)[0])
+		//return
+
+	case len(*l_in_quo) > 1:
+
+		for _, v := range *l_in_quo {
+			if v.O_type == "ask" {
+				l_ask[int(v.Price)].Enqueue(v)
+			} else if v.O_type == "bid" {
+				l_bid[int(v.Price)].Enqueue(v)
+			}
+		}
+
+	case len(*l_in_quo) == 0:
+		fmt.Printf("No incoming quotes\n++++++++++++++++++++++++++++++++++++\n")
+		fmt.Println("                  §")
+		return
+
 	}
-	return is
-}
-*/
-/*
-type Order_Book struct {
-	Ask [ORDER_BOOK_LENGTH]*Queue
-	Bid [ORDER_BOOK_LENGTH]*Queue
+
+	*l_in_quo = nil
+	fmt.Printf("End insertion\nINFUNC Incoming quote: %v     Pointer: %p\n++++++++++++++++++++++++++++++++++++\n", l_in_quo, l_in_quo)
+	fmt.Println("                  §")
+
 }
 
-*/
-////////////////////////////////
+
 
 //////////// Matching Engine /////////////
 
@@ -171,73 +186,6 @@ func Match(order_b common.Order_Book)(fill common.Order_Filled){
 }
 
 
-//////////////////////////////////////
-
-
-
-var ask_l [ORDER_BOOK_LENGTH]*common.Queue
-var bid_l [ORDER_BOOK_LENGTH]*common.Queue
-
-var incoming_q []common.Order
-
-/////////////////////////////////////////
-
-
-
-// It puts the single Order in the Order Book
-func Inserter(l_in_quo *[]common.Order, order_bo common.Order_Book) {
-
-	l_ask:= order_bo.Ask
-	l_bid := order_bo.Bid
-
-	fmt.Println("                  §")
-	fmt.Printf("++++++++++++++++++++++++++++++++++++\nStart insertion\nINFUNC Incoming quote: %v     Pointer: %p\n", l_in_quo, l_in_quo)
-
-	switch {
-	case len(*l_in_quo) == 1 && (*l_in_quo)[0].O_type == "ask":
-
-		l_ask[int((*l_in_quo)[0].Price)].Enqueue((*l_in_quo)[0])
-		//return
-
-	case len(*l_in_quo) == 1 && (*l_in_quo)[0].O_type == "bid":
-
-		l_bid[int((*l_in_quo)[0].Price)].Enqueue((*l_in_quo)[0])
-		//return
-
-	case len(*l_in_quo) > 1:
-
-		for _, v := range *l_in_quo {
-			if v.O_type == "ask" {
-				l_ask[int(v.Price)].Enqueue(v)
-			} else if v.O_type == "bid" {
-				l_bid[int(v.Price)].Enqueue(v)
-			}
-		}
-
-	case len(*l_in_quo) == 0:
-		fmt.Printf("No incoming quotes\n++++++++++++++++++++++++++++++++++++\n")
-		fmt.Println("                  §")
-		return
-
-	}
-
-	*l_in_quo = nil
-	fmt.Printf("End insertion\nINFUNC Incoming quote: %v     Pointer: %p\n++++++++++++++++++++++++++++++++++++\n", l_in_quo, l_in_quo)
-	fmt.Println("                  §")
-
-}
-
-
-// Fuction usefull for the Order_Book_print()
-func Size_Level(level_list []common.Order)(size int){
-
-	for i:=0; i< len(level_list);i++{
-		size= size+int(level_list[i].Volume)
-	}
-
-	return
-}
-
 
 
 // if there is no best quote it will rerurn {0,[]}
@@ -279,12 +227,12 @@ func Engine(list_incoming *[]common.Order,Or_Bo *common.Order_Book,list_filled *
 
             Inserter(list_incoming,*Or_Bo)
             Filled_Or:= Match(*Or_Bo)
-            common.Order_Book_print(*Or_Bo,ORDER_BOOK_LENGTH,false)
+            common.Order_Book_print(*Or_Bo,common.ORDER_BOOK_LENGTH,false)
             if Filled_Or.Price==-1{
                 continue
             }
             *list_filled = append(*list_filled,Filled_Or)
-            common.Order_Book_print(*Or_Bo,ORDER_BOOK_LENGTH,false)
+            common.Order_Book_print(*Or_Bo,common.ORDER_BOOK_LENGTH,false)
 
             for { // the -1 means that there is no match
 
@@ -295,11 +243,11 @@ func Engine(list_incoming *[]common.Order,Or_Bo *common.Order_Book,list_filled *
                 }
 
                 *list_filled = append(*list_filled,Filled_Or)
-                common.Order_Book_print(*Or_Bo,ORDER_BOOK_LENGTH,false)
+                common.Order_Book_print(*Or_Bo,common.ORDER_BOOK_LENGTH,false)
 
             }
             fmt.Printf("End main engine loop: %v",*list_filled)
-            common.Order_Book_print(*Or_Bo,ORDER_BOOK_LENGTH,false)
+            common.Order_Book_print(*Or_Bo,common.ORDER_BOOK_LENGTH,false)
             
         }
     }
@@ -307,32 +255,11 @@ func Engine(list_incoming *[]common.Order,Or_Bo *common.Order_Book,list_filled *
 
 
 
-
-
-
-
-
-
-var or = common.Order{O_type:"ask", Price:10, Volume:15}
-var or1 = common.Order{O_type:"ask",Price: 10,Volume: 1}
-var or2 = common.Order{O_type:"ask",Price: 10, Volume:5}
-var bid1 = common.Order{O_type:"bid",Price: 9,Volume: 9}
-var bid2 = common.Order{O_type:"bid",Price: 9, Volume:1}
-var bid3 = common.Order{O_type:"bid",Price: 7,Volume: 100}
-var bid4 = common.Order{O_type:"bid",Price: 9,Volume: 2}
-
-
-
-var filled_quotes []common.Order_Filled
-
-var type_ob bool
-
-
-
-
+///////////////////////////////////////////////////////////////////////////////
+/*
 // StartExchange starts the Exchange
 func StartExchange() {
-    ///////////////////////////////////////////////////////////////////////////////
+    
 
 	for price_i := range ask_l {
 		p_que := common.Queue{}
@@ -350,13 +277,8 @@ func StartExchange() {
 
 	Inserter(&incoming_q, OB)
 	
-	common.Order_Book_print(OB,ORDER_BOOK_LENGTH,false)
-
-    ///////////////////////////////////////////////////////////////////////////////
-
-
-
-    // Server implementation here
-    
+	common.Order_Book_print(OB,ORDER_BOOK_LENGTH,false) 
 
 }
+*/
+
