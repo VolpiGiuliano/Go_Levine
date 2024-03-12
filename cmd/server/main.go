@@ -1,7 +1,7 @@
 package main
 
 import (
-    "Go_net/pkg/server"
+    "Go_Levine/pkg/server"
 
 )
 func main() {

@@ -9,5 +9,7 @@ import (
 func init() {
 	gob.Register(Order{})
 	gob.Register(User{})
+	gob.Register(Order_Book{})
+	gob.Register(Queue{})
 	
 }

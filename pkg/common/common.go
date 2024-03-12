@@ -76,7 +76,6 @@ func (bigger_order *Order) Partial_fill(other_order Order) Order_Filled {
 	
 }
 
-var l_order_filled []Order_Filled
 
 /////////////Queue////////////////
 
@@ -125,16 +124,7 @@ type Order_Book struct {
 }
 
 
-
-var ask_l [ORDER_BOOK_LENGTH]*Queue
-var bid_l [ORDER_BOOK_LENGTH]*Queue
-
-var incoming_q []Order
-
 /////////////////////////////////////////
-
-
-
 
 
 // Fuction usefull for the Order_Book_print()

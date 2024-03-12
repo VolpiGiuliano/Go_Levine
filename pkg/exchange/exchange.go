@@ -3,33 +3,9 @@ package exchange
 
 import (
     "fmt"
-	"Go_net/pkg/common"
+	"Go_Levine/pkg/common"
 )
 
-
-
-///////////////Variables///////////////////////
-/*
-var or = common.Order{O_type:"ask", Price:10, Volume:15}
-var or1 = common.Order{O_type:"ask",Price: 10,Volume: 1}
-var or2 = common.Order{O_type:"ask",Price: 10, Volume:5}
-var bid1 = common.Order{O_type:"bid",Price: 9,Volume: 9}
-var bid2 = common.Order{O_type:"bid",Price: 9, Volume:1}
-var bid3 = common.Order{O_type:"bid",Price: 7,Volume: 100}
-var bid4 = common.Order{O_type:"bid",Price: 9,Volume: 2}
-*/
-
-/*
-var filled_quotes []common.Order_Filled
-
-var type_ob bool
-
-var ask_l [common.ORDER_BOOK_LENGTH]*common.Queue
-var bid_l [common.ORDER_BOOK_LENGTH]*common.Queue
-
-var incoming_q []common.Order
-*/
-/////////////////////////////////////////
 
 
 // It puts the single Order in the Order Book
@@ -255,30 +231,4 @@ func Engine(list_incoming *[]common.Order,Or_Bo *common.Order_Book,list_filled *
 
 
 
-///////////////////////////////////////////////////////////////////////////////
-/*
-// StartExchange starts the Exchange
-func StartExchange() {
-    
-
-	for price_i := range ask_l {
-		p_que := common.Queue{}
-		ask_l[price_i] = &p_que
-	}
-
-	for price_i := range bid_l {
-		p_que := common.Queue{}
-		bid_l[price_i] = &p_que
-	}
-	
-	OB := common.Order_Book{Ask:ask_l,Bid: bid_l}
-
-	incoming_q = append(incoming_q, or, or2,or1, bid1, bid2, bid3, bid4)
-
-	Inserter(&incoming_q, OB)
-	
-	common.Order_Book_print(OB,ORDER_BOOK_LENGTH,false) 
-
-}
-*/
 

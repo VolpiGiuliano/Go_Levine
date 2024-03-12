@@ -1,7 +1,7 @@
 package main
 
 import(
-	"Go_net/pkg/client"
+	"Go_Levine/pkg/client"
 
 )
 

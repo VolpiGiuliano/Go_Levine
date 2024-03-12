@@ -1,3 +1,3 @@
-module Go_net
+module Go_Levine
 
 go 1.22.0

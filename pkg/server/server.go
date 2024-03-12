@@ -3,8 +3,8 @@ package server
 import (
     "fmt"
     "net"
-	"Go_net/pkg/common"
-    "Go_net/pkg/exchange"
+	"Go_Levine/pkg/common"
+    "Go_Levine/pkg/exchange"
     "encoding/gob"
 )
 
@@ -73,7 +73,7 @@ func StartServer() {
             fmt.Println("Error accepting connection:", err)
             continue
         }
-        go handleConnection(conn,&incoming_q)
+        go handleConnection(conn,&incoming_q,&OB)
 
 
         if len(incoming_q)!=0{
@@ -90,7 +90,7 @@ func StartServer() {
 
 
 // handleConnection handles a single client connection
-func handleConnection(conn net.Conn,list *[]common.Order) {
+func handleConnection(conn net.Conn,list *[]common.Order,OB *common.Order_Book) {
 	fmt.Printf("Collegato! %v\n",conn.RemoteAddr())
     defer conn.Close()
 
@@ -98,6 +98,7 @@ func handleConnection(conn net.Conn,list *[]common.Order) {
     // ...
 
     for {
+        fmt.Println("Return to the start of the loop")
         decoder := gob.NewDecoder(conn)
 		// Read the message type
 		var messageType int
@@ -141,6 +142,69 @@ func handleConnection(conn net.Conn,list *[]common.Order) {
                 fmt.Println("Sending response:", response)
                 conn.Write([]byte(response))
 
+            case 3:// Oeder book
+                
+
+                var user_info common.User
+                err := decoder.Decode(&user_info)
+                if err != nil {
+                    fmt.Println("Error decoding User for OB:", err)
+                    return
+                }
+                fmt.Printf("Received User info for OB: %+v\n", user_info)
+             
+
+                fmt.Printf("Conn: %v\n",&conn)
+
+                // Respond to User
+                response := fmt.Sprintf("Response to User %v",user_info.Name)
+                fmt.Println("Sending response:", response)
+                conn.Write([]byte(response))
+                
+                encoder := gob.NewEncoder(conn)
+                // Encode the message type
+                
+                err_bi := encoder.Encode(4)
+                if err_bi != nil {
+                    fmt.Printf("error encoding message type: %v", err_bi)
+                }
+
+                // Encode and send the order book to the client
+                err_mm := encoder.Encode(OB)
+                if err_mm != nil {
+                    fmt.Println("Error encoding order book:", err_mm)
+                    //return
+                }
+
+                /*
+                err =common.SendMessage(conn,4,OB)
+                if err != nil {
+                    fmt.Println("Error sending OrderBook:", err)
+                    return
+                }
+                */
+                ////////////////////////////////////////////
+                fmt.Println("Order book sent to client")
+            
+/* 
+            case 4:
+                fmt.Printf("ARE WE HERE???")
+               
+                encoder := gob.NewEncoder(conn)
+                // Encode the message type
+
+                err_bi := encoder.Encode(4)
+                if err_bi != nil {
+                    fmt.Printf("error encoding message type: %v", err_bi)
+                }
+
+                // Encode and send the order book to the client
+                err_mm := encoder.Encode(OB)
+                if err_mm != nil {
+                    fmt.Println("Error encoding order book:", err_mm)
+                    //return
+                }
+*/
             default:
                 fmt.Println("Unknown message type:", messageType)
                 return
