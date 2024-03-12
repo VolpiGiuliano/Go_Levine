@@ -2,7 +2,6 @@ package client
 
 import (
 	"Go_net/pkg/common"
-
 	"encoding/gob"
 	"fmt"
 	"net"
@@ -40,6 +39,7 @@ func sendMessage(conn net.Conn, messageType int, data interface{}) error {
 // StartClient starts the client
 func StartClient() {
     // Client implementation here
+
     conn, err := net.Dial("tcp", "localhost:12345")
     if err != nil {
         fmt.Println("Error connecting to server:", err)
@@ -80,7 +80,7 @@ func StartClient() {
 		} else if exi== "t" {
 			inOrd := Type_Order()
 
-			fmt.Printf("Address of inord=%d:\t%p\n", inOrd, &inOrd)
+			fmt.Printf("Address of inord= %v:\t%p\n", inOrd, &inOrd)
 			
 			err = sendMessage(conn, 1, inOrd)
 			if err != nil {
@@ -104,15 +104,15 @@ func Type_Order() common.Order {
 		bid_ask_in, _ := reader.ReadString('\n')
 		bid_ask := strings.TrimSpace(bid_ask_in)
 
-		fmt.Print("Enter your volume: ")
-		volu, _ := reader.ReadString('\n')
-		volu = strings.TrimSpace(volu)
-		volum, _ := strconv.Atoi(volu)
-
 		fmt.Print("Enter your price: ")
 		price, _ := reader.ReadString('\n')
 		price = strings.TrimSpace(price)
 		pric, _ := strconv.Atoi(price)
+
+		fmt.Print("Enter your volume: ")
+		volu, _ := reader.ReadString('\n')
+		volu = strings.TrimSpace(volu)
+		volum, _ := strconv.Atoi(volu)
 
 		inOrd:= common.Order{
 			O_type:bid_ask,
