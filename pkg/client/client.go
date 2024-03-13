@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	//"time"
 	)
 
 
@@ -70,7 +71,7 @@ func StartClient() {
 		return
 	}
 	fmt.Printf("\nInfo sent: %v\n",User_info)
-
+	
  
 
     // loop until there are no more matches
@@ -99,97 +100,54 @@ func StartClient() {
 			fmt.Printf("\nOrder sent: %v\n",inOrd)
 
 		} else if exi== "v" {
-			///demooo
 
 			encoder := gob.NewEncoder(conn)
 
 			// Encode the message type
 			err := encoder.Encode(3)
 			if err != nil {
+				fmt.Errorf("error encoding message type: %v", err)
 				continue //fmt.Errorf("error encoding message type: %v", err)
 			}
-		
+			
 			// Encode and send the actual data
-			err = encoder.Encode(User_info)
+			err = encoder.Encode(User_info) //Why no :????????????
 			if err != nil {
+				fmt.Errorf("error encoding data: %v", err)
 				continue//fmt.Errorf("error encoding data: %v", err)
 			}
-			var code int
+			//var code int
 			var OB common.Order_Book
 
-			
+			//time.Sleep(2 * time.Second)
+		/*	
+			err = common.ReciveMessage(conn,4,&OB)
+			if err != nil {
+				fmt.Println("Error Reciving Data request:", err)
+				return
+			}
+*/
 		
 			decoder := gob.NewDecoder(conn)
-
-			fmt.Printf("Code 1: %v\n",code)
-			err = decoder.Decode(&code)
-			fmt.Printf("Code: %v\n",code)
-			if err != nil {
-				fmt.Println("Error decoding order book type message:", err)
+			/*
+			err__f := decoder.Decode(&code)
+			fmt.Printf("Code: %v \n",code)
+			if err__f != nil {
+				fmt.Println("Error decoding order book type message:", err__f)
 				continue
 			}
-
-			
-			
+			*/
 			err_m := decoder.Decode(&OB)
 			if err_m != nil {
 				fmt.Println("Error decoding order book data:", err_m)
 				continue
 			}
+		/*	*/
 			fmt.Printf("Received Order Book: %+v\n", OB)
 		
 			// Print the received order book
 			fmt.Println("Received Order Book:")
 			common.Order_Book_print(OB, common.ORDER_BOOK_LENGTH, false)
-
-
-			////////////////////////////////////////////////demo
-/*
-			err = common.SendMessage(conn, 3, User_info)
-			if err != nil {
-				fmt.Println("Error sending Data request:", err)
-				return
-			}
-			fmt.Printf("\nRequest sent\n")
-
-			//////// Response /////////////////
-			// Create a decoder for receiving gob messages
-			
-			
-			/*
-			Do you check all your errors?
-
-			You have to use one Encoder for one stream!
-			The error suggests that you write to the file with several Encoders,
-			so the Decoder meets the same type two times (gob encodes the type information
-			once per stream, so the Decoder wants to meet a type description only one time).
-			
-			
-
-			// Receive and decode the order book from the server
-			
-
-			decoder := gob.NewDecoder(conn)
-			var code int= 4
-			err = decoder.Decode(&code)
-			if err != nil {
-				fmt.Println("Error decoding order book:", err)
-				return
-			}
-
-			
-			var OB common.Order_Book
-			err_m := decoder.Decode(&OB)
-			if err_m != nil {
-				fmt.Println("Error decoding order book 2:", err_m)
-				return
-			}
-			fmt.Printf("Received Order Book: %+v\n", OB)
-		
-			// Print the received order book
-			fmt.Println("Received Order Book:")
-			common.Order_Book_print(OB, common.ORDER_BOOK_LENGTH, false)
-*/
 		}
 
 	}

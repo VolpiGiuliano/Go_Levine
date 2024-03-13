@@ -125,7 +125,7 @@ func handleConnection(conn net.Conn,list *[]common.Order,OB *common.Order_Book) 
                 response := "Response to MessageOne"
                 fmt.Println("Sending response:", response)
                 conn.Write([]byte(response))
-            
+                
             
             case 2:// User info
                 // Decode and handle MessageTwo
@@ -161,15 +161,19 @@ func handleConnection(conn net.Conn,list *[]common.Order,OB *common.Order_Book) 
                 fmt.Println("Sending response:", response)
                 conn.Write([]byte(response))
                 
+                
+                // Sending the OB
+
                 encoder := gob.NewEncoder(conn)
                 // Encode the message type
-                
+                /*
                 err_bi := encoder.Encode(4)
                 if err_bi != nil {
                     fmt.Printf("error encoding message type: %v", err_bi)
                 }
-
+                */
                 // Encode and send the order book to the client
+
                 err_mm := encoder.Encode(OB)
                 if err_mm != nil {
                     fmt.Println("Error encoding order book:", err_mm)
@@ -185,26 +189,7 @@ func handleConnection(conn net.Conn,list *[]common.Order,OB *common.Order_Book) 
                 */
                 ////////////////////////////////////////////
                 fmt.Println("Order book sent to client")
-            
-/* 
-            case 4:
-                fmt.Printf("ARE WE HERE???")
-               
-                encoder := gob.NewEncoder(conn)
-                // Encode the message type
-
-                err_bi := encoder.Encode(4)
-                if err_bi != nil {
-                    fmt.Printf("error encoding message type: %v", err_bi)
-                }
-
-                // Encode and send the order book to the client
-                err_mm := encoder.Encode(OB)
-                if err_mm != nil {
-                    fmt.Println("Error encoding order book:", err_mm)
-                    //return
-                }
-*/
+  
             default:
                 fmt.Println("Unknown message type:", messageType)
                 return

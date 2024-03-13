@@ -8,7 +8,7 @@ import (
 
 
 const(
-	ORDER_BOOK_LENGTH int = 40
+	ORDER_BOOK_LENGTH int = 20
 )
 
 type User struct{
@@ -212,3 +212,24 @@ func SendMessage(conn net.Conn, messageType int, data interface{}) error {
 
 	return nil
 }
+
+func ReciveMessage(conn net.Conn, messageType int, data interface{}) error {
+	
+	decoder := gob.NewDecoder(conn)
+	/*
+	err__f := decoder.Decode(&code)
+	if err__f != nil {
+		fmt.Println("Error decoding order book type message:", err__f)
+		continue
+	}
+	*/
+	err_m := decoder.Decode(&data)
+	if err_m != nil {
+		fmt.Println("Error decoding order book data:", data)
+		return fmt.Errorf("error decoding order book data: %v", err_m)
+		
+	}
+	return nil
+}
+
+
