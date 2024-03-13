@@ -1,11 +1,12 @@
 package server
 
 import (
-    "fmt"
-    "net"
 	"Go_Levine/pkg/common"
-    "Go_Levine/pkg/exchange"
-    "encoding/gob"
+	"Go_Levine/pkg/exchange"
+	"encoding/gob"
+	"fmt"
+	"net"
+	//"time"
 )
 
 
@@ -73,8 +74,8 @@ func StartServer() {
             fmt.Println("Error accepting connection:", err)
             continue
         }
-        go handleConnection(conn,&incoming_q,&OB)
 
+        go handleConnection(conn,&incoming_q,&OB)
 
         if len(incoming_q)!=0{
             exchange.Inserter(&incoming_q, OB)
@@ -94,8 +95,6 @@ func handleConnection(conn net.Conn,list *[]common.Order,OB *common.Order_Book) 
 	fmt.Printf("Collegato! %v\n",conn.RemoteAddr())
     defer conn.Close()
 
-    // Server implementation for handling client connections
-    // ...
 
     for {
         fmt.Println("Return to the start of the loop")
@@ -154,41 +153,21 @@ func handleConnection(conn net.Conn,list *[]common.Order,OB *common.Order_Book) 
                 fmt.Printf("Received User info for OB: %+v\n", user_info)
              
 
-                fmt.Printf("Conn: %v\n",&conn)
+                fmt.Printf("Conn: %v\n",conn)
 
-                // Respond to User
-                response := fmt.Sprintf("Response to User %v",user_info.Name)
-                fmt.Println("Sending response:", response)
-                conn.Write([]byte(response))
-                
                 
                 // Sending the OB
 
                 encoder := gob.NewEncoder(conn)
-                // Encode the message type
-                /*
-                err_bi := encoder.Encode(4)
-                if err_bi != nil {
-                    fmt.Printf("error encoding message type: %v", err_bi)
-                }
-                */
-                // Encode and send the order book to the client
-
-                err_mm := encoder.Encode(OB)
+                err_mm := encoder.Encode(*OB)
                 if err_mm != nil {
                     fmt.Println("Error encoding order book:", err_mm)
                     //return
                 }
 
-                /*
-                err =common.SendMessage(conn,4,OB)
-                if err != nil {
-                    fmt.Println("Error sending OrderBook:", err)
-                    return
-                }
-                */
                 ////////////////////////////////////////////
                 fmt.Println("Order book sent to client")
+                //time.Sleep(5 * time.Second)
   
             default:
                 fmt.Println("Unknown message type:", messageType)

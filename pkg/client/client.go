@@ -78,7 +78,7 @@ func StartClient() {
 	var exi string="n"
 	for{
 		
-		fmt.Print("\nWanna: \n (q) Quit\n (t) Trade\n (v) See OrderBook\n\n")
+		fmt.Print("\nWanna: \n (q) Quit\n (t) Trade\n (v) See OrderBook (if there is some error retry)\n\n")
 		inp, _ := reader.ReadString('\n')
 		exi = strings.TrimSpace(inp)
 		
@@ -119,30 +119,15 @@ func StartClient() {
 			//var code int
 			var OB common.Order_Book
 
-			//time.Sleep(2 * time.Second)
-		/*	
-			err = common.ReciveMessage(conn,4,&OB)
-			if err != nil {
-				fmt.Println("Error Reciving Data request:", err)
-				return
-			}
-*/
-		
+
 			decoder := gob.NewDecoder(conn)
-			/*
-			err__f := decoder.Decode(&code)
-			fmt.Printf("Code: %v \n",code)
-			if err__f != nil {
-				fmt.Println("Error decoding order book type message:", err__f)
-				continue
-			}
-			*/
 			err_m := decoder.Decode(&OB)
 			if err_m != nil {
 				fmt.Println("Error decoding order book data:", err_m)
 				continue
-			}
-		/*	*/
+			} 
+			fmt.Println("Order recived!!")
+
 			fmt.Printf("Received Order Book: %+v\n", OB)
 		
 			// Print the received order book

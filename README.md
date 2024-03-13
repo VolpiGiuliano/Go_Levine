@@ -6,7 +6,13 @@ The project aims to replicate the main function of an exchange: organizing the i
 
 ## Bugs
 
-* [ ] Fix again the duplicate problem
+* [X] Fix again the duplicate problem
+
   ```
   Error decoding order book type message: gob: duplicate type received
   ```
+
+  Fix: the encoder of the server had to have a pointer as an argument
+  `err_mm := encoder.Encode(*OB)`
+
+  But only after the third try the Client can read it
