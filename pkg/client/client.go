@@ -48,7 +48,7 @@ func Type_Order() common.Order {
 // StartClient starts the client
 func StartClient() {
     // Client implementation here
-	//conn, err := net.Dial("tcp", "192.168.1.133:12345")
+	
     conn, err := net.Dial("tcp", "localhost:12345")
     if err != nil {
         fmt.Println("Error connecting to server:", err)
